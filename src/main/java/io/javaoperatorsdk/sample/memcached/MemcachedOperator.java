@@ -28,7 +28,6 @@ public class MemcachedOperator implements QuarkusApplication {
   public int run(String... args) throws Exception {
     final var config = configuration.getConfigurationFor(controller);
     System.out.println("CR class: " + config.getCustomResourceClass());
-    System.out.println("Doneable class = " + config.getDoneableClass());
     Quarkus.waitForExit();
     return 0;
   }

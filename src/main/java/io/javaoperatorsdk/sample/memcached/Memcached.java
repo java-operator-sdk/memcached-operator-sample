@@ -1,32 +1,11 @@
 package io.javaoperatorsdk.sample.memcached;
 
 import io.fabric8.kubernetes.client.CustomResource;
+import io.fabric8.kubernetes.model.annotation.Group;
+import io.fabric8.kubernetes.model.annotation.Version;
 
-public class Memcached extends CustomResource {
+@Version("v1alpha1")
+@Group("cache.example.com")
+public class Memcached extends CustomResource<MemcachedSpec, MemcachedStatus> {
 
-    private MemcachedSpec spec;
-
-    private MemcachedStatus status;
-
-    public MemcachedSpec getSpec() {
-        if (spec == null) {
-            spec = new MemcachedSpec();
-        }
-        return spec;
-    }
-
-    public void setSpec(MemcachedSpec spec) {
-        this.spec = spec;
-    }
-
-    public MemcachedStatus getStatus() {
-        if (status == null) {
-            status = new MemcachedStatus();
-        }
-        return status;
-    }
-
-    public void setStatus(MemcachedStatus status) {
-        this.status = status;
-    }
 }

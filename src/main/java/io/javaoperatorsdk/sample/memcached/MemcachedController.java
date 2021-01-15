@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Controller(crdName = "memcacheds.cache.example.com")
+@Controller
 public class MemcachedController implements ResourceController<Memcached> {
 
     private static Logger log = LoggerFactory.getLogger(MemcachedController.class);
