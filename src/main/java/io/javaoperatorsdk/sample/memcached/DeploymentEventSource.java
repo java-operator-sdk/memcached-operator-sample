@@ -1,19 +1,16 @@
 package io.javaoperatorsdk.sample.memcached;
 
+import static io.javaoperatorsdk.operator.processing.KubernetesResourceUtils.getUID;
+import static io.javaoperatorsdk.operator.processing.KubernetesResourceUtils.getVersion;
+
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.javaoperatorsdk.operator.processing.event.AbstractEventSource;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-
-import static io.javaoperatorsdk.operator.processing.KubernetesResourceUtils.getUID;
-import static io.javaoperatorsdk.operator.processing.KubernetesResourceUtils.getVersion;
-import static java.net.HttpURLConnection.HTTP_GONE;
 
 public class DeploymentEventSource extends AbstractEventSource implements Watcher<Deployment> {
   private static final Logger log = LoggerFactory.getLogger(DeploymentEventSource.class);
@@ -22,7 +19,8 @@ public class DeploymentEventSource extends AbstractEventSource implements Watche
 
   private final Map<String, String> labels;
 
-  public static DeploymentEventSource createAndRegisterWatch(KubernetesClient client, Map<String, String> labels) {
+  public static DeploymentEventSource createAndRegisterWatch(
+      KubernetesClient client, Map<String, String> labels) {
     DeploymentEventSource deploymentEventSource = new DeploymentEventSource(client, labels);
     deploymentEventSource.registerWatch();
     return deploymentEventSource;
@@ -34,12 +32,7 @@ public class DeploymentEventSource extends AbstractEventSource implements Watche
   }
 
   private void registerWatch() {
-    client
-        .apps()
-        .deployments()
-        .inAnyNamespace()
-        .withLabels(labels)
-        .watch(this);
+    client.apps().deployments().inAnyNamespace().withLabels(labels).watch(this);
   }
 
   @Override
@@ -59,8 +52,12 @@ public class DeploymentEventSource extends AbstractEventSource implements Watche
       return;
     }
 
-    eventHandler.handleEvent(new DeploymentEvent(action,
-        deployment, deployment.getMetadata().getOwnerReferences().get(0).getUid(), this));
+    eventHandler.handleEvent(
+        new DeploymentEvent(
+            action,
+            deployment,
+            deployment.getMetadata().getOwnerReferences().get(0).getUid(),
+            this));
   }
 
   @Override
