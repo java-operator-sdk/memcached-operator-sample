@@ -1,18 +1,14 @@
 package io.javaoperatorsdk.sample.memcached;
 
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.Operator;
 import io.javaoperatorsdk.operator.api.config.ConfigurationService;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
-
 import javax.inject.Inject;
 
 @QuarkusMain
 public class MemcachedOperator implements QuarkusApplication {
-
-  @Inject KubernetesClient client;
 
   @Inject ConfigurationService configuration;
 
@@ -26,9 +22,7 @@ public class MemcachedOperator implements QuarkusApplication {
 
   @Override
   public int run(String... args) throws Exception {
-    final var config = configuration.getConfigurationFor(controller);
-    System.out.println("CR class: " + config.getCustomResourceClass());
-    System.out.println("Doneable class = " + config.getDoneableClass());
+    configuration.getConfigurationFor(controller);
     Quarkus.waitForExit();
     return 0;
   }

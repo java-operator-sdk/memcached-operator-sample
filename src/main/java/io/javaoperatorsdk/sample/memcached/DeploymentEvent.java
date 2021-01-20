@@ -10,7 +10,10 @@ public class DeploymentEvent extends AbstractEvent {
   private final Deployment deployment;
 
   public DeploymentEvent(
-      Watcher.Action action, Deployment resource, String ownerUid, DeploymentEventSource deploymentEventSource) {
+      Watcher.Action action,
+      Deployment resource,
+      String ownerUid,
+      DeploymentEventSource deploymentEventSource) {
     super(ownerUid, deploymentEventSource);
     this.action = action;
     this.deployment = resource;
