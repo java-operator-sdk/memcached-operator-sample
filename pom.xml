@@ -15,14 +15,21 @@
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
-    <quarkus.version>1.11.0.Final</quarkus.version>
-    <josdk.version>1.6.4-SNAPSHOT</josdk.version>
+    <quarkus.version>1.12.0.Final</quarkus.version>
+    <josdk.version>1.7.2</josdk.version>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>kubernetes-client-bom</artifactId>
+        <version>5.1.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-bom</artifactId>
@@ -43,6 +50,16 @@
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
       <version>3.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.fabric8</groupId>
+      <artifactId>crd-generator</artifactId>
+      <version>5.1.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.fabric8</groupId>
+      <artifactId>kubernetes-model-common</artifactId>
     </dependency>
   </dependencies>
 
