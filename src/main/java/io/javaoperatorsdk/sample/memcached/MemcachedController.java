@@ -1,13 +1,29 @@
 package io.javaoperatorsdk.sample.memcached;
 
-import io.fabric8.kubernetes.api.model.*;
+import static io.javaoperatorsdk.operator.api.reconciler.Constants.NO_FINALIZER;
+
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
+import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodSpecBuilder;
+import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.javaoperatorsdk.operator.api.*;
-import io.javaoperatorsdk.operator.api.Context;
-import io.javaoperatorsdk.operator.processing.event.EventSourceManager;
+import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
+import io.javaoperatorsdk.operator.api.reconciler.Context;
+import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
+import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
+import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
+import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
+import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
+import io.javaoperatorsdk.operator.processing.event.source.EventSource;
+import io.javaoperatorsdk.operator.processing.event.source.informer.InformerEventSource;
+import io.javaoperatorsdk.operator.processing.event.source.informer.Mappers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +32,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Controller
-public class MemcachedController implements ResourceController<Memcached> {
+@ControllerConfiguration(finalizerName = NO_FINALIZER)
+public class MemcachedController
+    implements Reconciler<Memcached>, EventSourceInitializer<Memcached> {
 
   private static Logger log = LoggerFactory.getLogger(MemcachedController.class);
 
@@ -28,17 +45,21 @@ public class MemcachedController implements ResourceController<Memcached> {
   }
 
   @Override
-  public void init(EventSourceManager eventSourceManager) {
-    Map<String, String> deploymentLabel = new HashMap<>();
-    deploymentLabel.put("app", "memcached");
-    eventSourceManager.registerEventSource(
-        "memcached-deployment",
-        DeploymentEventSource.createAndRegisterWatch(client, deploymentLabel));
+  public List<EventSource> prepareEventSources(EventSourceContext<Memcached> context) {
+    SharedIndexInformer<Deployment> deploymentInformer =
+        client
+            .apps()
+            .deployments()
+            .inAnyNamespace()
+            .withLabel("app.kubernetes.io/managed-by", "memcached-operator")
+            .runnableInformer(0);
+
+    return List.of(new InformerEventSource<>(deploymentInformer, Mappers.fromOwnerReference()));
   }
 
   @Override
-  public UpdateControl<Memcached> createOrUpdateResource(
-      Memcached memcached, Context<Memcached> context) {
+  public UpdateControl<Memcached> reconcile(Memcached memcached, Context context) {
+
     Deployment deployment =
         client
             .apps()
@@ -76,7 +97,7 @@ public class MemcachedController implements ResourceController<Memcached> {
         || !CollectionUtils.isEqualCollection(podNames, memcached.getStatus().getNodes())) {
       if (memcached.getStatus() == null) memcached.setStatus(new MemcachedStatus());
       memcached.getStatus().setNodes(podNames);
-      return UpdateControl.updateStatusSubResource(memcached);
+      return UpdateControl.updateStatus(memcached);
     }
 
     return UpdateControl.noUpdate();
@@ -88,10 +109,11 @@ public class MemcachedController implements ResourceController<Memcached> {
             new ObjectMetaBuilder()
                 .withName(m.getMetadata().getName())
                 .withNamespace(m.getMetadata().getNamespace())
+                .withLabels(Map.of("app.kubernetes.io/managed-by", "memcached-operator"))
                 .withOwnerReferences(
                     new OwnerReferenceBuilder()
-                        .withApiVersion("v1alpha1")
-                        .withKind("Memcached")
+                        .withApiVersion(m.getApiVersion())
+                        .withKind(m.getKind())
                         .withName(m.getMetadata().getName())
                         .withUid(m.getMetadata().getUid())
                         .build())
@@ -129,14 +151,5 @@ public class MemcachedController implements ResourceController<Memcached> {
     labels.put("app", "memcached");
     labels.put("memcached_cr", m.getMetadata().getName());
     return labels;
-  }
-
-  @Override
-  public DeleteControl deleteResource(Memcached memcached, Context<Memcached> context) {
-    log.info("Deleting memcached object {}", memcached.getMetadata().getName());
-    // nothing to do here...
-    // framework takes care of deleting the memcached object
-    // k8s takes care of deleting deployment and pods because of ownerreference set
-    return DeleteControl.DEFAULT_DELETE;
   }
 }

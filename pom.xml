@@ -15,8 +15,8 @@
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
-    <quarkus.version>1.13.2.Final</quarkus.version>
-    <fabric8-client.version>5.3.0</fabric8-client.version>
+    <quarkus-operator-sdk.version>3.0.2</quarkus-operator-sdk.version>
+    <quarkus.version>2.6.3.Final</quarkus.version>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
   </properties>
@@ -24,16 +24,9 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.fabric8</groupId>
-        <artifactId>kubernetes-client-bom</artifactId>
-        <version>${fabric8-client.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-bom</artifactId>
-        <version>${quarkus.version}</version>
+        <groupId>io.quarkiverse.operatorsdk</groupId>
+        <artifactId>quarkus-operator-sdk-bom</artifactId>
+        <version>${quarkus-operator-sdk.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -44,7 +37,6 @@
     <dependency>
       <groupId>io.quarkiverse.operatorsdk</groupId>
       <artifactId>quarkus-operator-sdk</artifactId>
-      <version>1.8.2</version>
     </dependency>
     <dependency>
       <groupId>commons-collections</groupId>
@@ -54,7 +46,6 @@
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>crd-generator-apt</artifactId>
-      <version>${fabric8-client.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
