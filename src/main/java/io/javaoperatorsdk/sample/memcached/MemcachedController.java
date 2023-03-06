@@ -1,7 +1,5 @@
 package io.javaoperatorsdk.sample.memcached;
 
-import static io.javaoperatorsdk.operator.api.reconciler.Constants.NO_FINALIZER;
-
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
@@ -14,7 +12,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
+import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
@@ -32,7 +30,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ControllerConfiguration(finalizerName = NO_FINALIZER)
+@ControllerConfiguration()
 public class MemcachedController
     implements Reconciler<Memcached>, EventSourceInitializer<Memcached> {
 
@@ -45,16 +43,13 @@ public class MemcachedController
   }
 
   @Override
-  public List<EventSource> prepareEventSources(EventSourceContext<Memcached> context) {
-    SharedIndexInformer<Deployment> deploymentInformer =
-        client
-            .apps()
-            .deployments()
-            .inAnyNamespace()
-            .withLabel("app.kubernetes.io/managed-by", "memcached-operator")
-            .runnableInformer(0);
+  public Map<String, EventSource> prepareEventSources(EventSourceContext<Memcached> context) {
+      InformerConfiguration<Deployment> deploymentInformerConfiguration = InformerConfiguration.from(Deployment.class, context)
+              .withLabelSelector("app.kubernetes.io/managed-by=memcached-operator")
+              .withSecondaryToPrimaryMapper(Mappers.fromOwnerReference())
+              .build();
 
-    return List.of(new InformerEventSource<>(deploymentInformer, Mappers.fromOwnerReference()));
+      return EventSourceInitializer.nameEventSources(new InformerEventSource<>(deploymentInformerConfiguration, context));
   }
 
   @Override
